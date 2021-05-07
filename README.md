@@ -4,6 +4,7 @@ Thanks to https://github.com/vishalkhopkar/cowin_vaccination_ping
 
 # Requirements
 Working installation of python 
+
 Requires the following python packages :
 1. playsound
 2. requests
