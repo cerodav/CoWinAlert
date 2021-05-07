@@ -2,22 +2,21 @@ import playsound
 import requests
 import urllib3 as urllib
 import datetime
-import json
 import time
 urllib.disable_warnings(urllib.exceptions.InsecureRequestWarning)
 
 BASE_API_URL = "https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByDistrict"
 QUERY_TEMPLATE = "?district_id={}&date={}"
 SLEEP_TIME = 30
-REGION_LABELS = ["Bangalore", "Mumbai (MMR)", "Pune", "Delhi (NCR)", "Hyderabad", "Chennai"]
-DISTRICT_CODES = [
-    [294, 265],
-    [395, 392, 393, 394],
-    [363],
-    [141, 145, 140, 146, 147, 143, 148, 149, 144, 150, 142, 199, 188, 207, 202, 650, 651],
-    [581],
-    [571, 565, 557]
-]
+DISTRICT_CODES = {
+    "Bangalore" : [294, 265],
+    "Mumbai" : [395, 392, 393, 394],
+    "Pune": [363],
+    "Delhi" : [141, 145, 140, 146, 147, 143, 148, 149, 144, 150, 142, 199, 188, 207, 202, 650, 651],
+    "Hyderabad" : [581],
+    "Chennai" : [571, 565, 557]
+}
+REGION_LABELS = list(DISTRICT_CODES.keys())
 MIN_AGE = 18
 DISTRICT_LABEL_MAP = {
     294 : 'BBMP',
@@ -29,7 +28,7 @@ def process_output(json_output, region, dist_id):
     no_of_centres = 0
     output = json_output
     centres = output["centers"]
-    districtName = DISTRICT_LABEL_MAP[dist_id]
+    districtName = DISTRICT_LABEL_MAP.get(dist_id, 'DistrictID#{}'.format(dist_id))
     for centre in centres:
         sessions = centre["sessions"]
         for session in sessions:
@@ -50,13 +49,14 @@ def get_input():
     disp_str = "[I] Enter city index :"
     for idx, regionName in enumerate(REGION_LABELS):
         disp_str += "\n{}. {}".format(idx + 1, regionName)
-    disp_str += "\n------------ index : "
-    reg_id = input(disp_str)
+    disp_str += "\n------------ Region : "
+    reg_name = input(disp_str)
     try:
-        reg_id = int(reg_id)
-        if reg_id < 1 or reg_id > len(REGION_LABELS):
+        reg_name = reg_name.upper()
+        if reg_name not in [x.upper() for x in REGION_LABELS]:
             raise Exception("Invalid")
-        region = REGION_LABELS[reg_id - 1]
+        reg_id = [x.upper() for x in REGION_LABELS].index(reg_name)
+        region = REGION_LABELS[reg_id]
         print("[I] Your region is {}\n".format(region))
         return reg_id
     except:
@@ -65,8 +65,8 @@ def get_input():
 
 def poll_cowin_portal(reg_id):
 
-    dist_ids = DISTRICT_CODES[reg_id - 1]
-    region = REGION_LABELS[reg_id - 1]
+    region = REGION_LABELS[reg_id]
+    dist_ids = DISTRICT_CODES[region]
     while True:
         current_date = datetime.datetime.now()
         formatted_date = current_date.strftime('%d-%m-%Y')
